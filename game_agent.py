@@ -213,12 +213,47 @@ class MinimaxPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        self.check_search_timeout()
+
+        best_score = float("-inf")
+        best_move = (-1, -1)
+
+        for move in game.get_legal_moves(self):
+            score = self.min_play(game.forecast_move(move), depth - 1)
+            if score > best_score:
+                best_score = score
+                best_move = move
+
+        return best_move
+
+    def check_search_timeout(self):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+    def max_play(self, game, depth):
+        self.check_search_timeout()
 
+        moves = game.get_legal_moves(self)
+        if len(moves) <= 0:
+            return game.utility(self)
+
+        if depth == 0:
+            return self.score(game, self)
+
+        return max([self.min_play(game.forecast_move(move), depth - 1) for move in moves])
+
+    def min_play(self, game, depth):
+        self.check_search_timeout()
+
+        opponent = game.get_opponent(self)
+        moves = game.get_legal_moves(opponent)
+        if len(moves) <= 0:
+            return game.utility(self)
+
+        if depth == 0:
+            return self.score(game, self)
+
+        return min([self.max_play(game.forecast_move(move), depth - 1) for move in moves])
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
