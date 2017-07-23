@@ -219,7 +219,7 @@ class MinimaxPlayer(IsolationPlayer):
         best_move = (-1, -1)
 
         for move in game.get_legal_moves(self):
-            score = self.min_play(game.forecast_move(move), depth - 1)
+            score = self.min_value(game.forecast_move(move), depth - 1)
             if score > best_score:
                 best_score = score
                 best_move = move
@@ -230,7 +230,7 @@ class MinimaxPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-    def max_play(self, game, depth):
+    def max_value(self, game, depth):
         self.check_search_timeout()
 
         moves = game.get_legal_moves(self)
@@ -240,9 +240,9 @@ class MinimaxPlayer(IsolationPlayer):
         if depth == 0:
             return self.score(game, self)
 
-        return max([self.min_play(game.forecast_move(move), depth - 1) for move in moves])
+        return max([self.min_value(game.forecast_move(move), depth - 1) for move in moves])
 
-    def min_play(self, game, depth):
+    def min_value(self, game, depth):
         self.check_search_timeout()
 
         opponent = game.get_opponent(self)
@@ -253,7 +253,7 @@ class MinimaxPlayer(IsolationPlayer):
         if depth == 0:
             return self.score(game, self)
 
-        return min([self.max_play(game.forecast_move(move), depth - 1) for move in moves])
+        return min([self.max_value(game.forecast_move(move), depth - 1) for move in moves])
 
 class AlphaBetaPlayer(IsolationPlayer):
     """Game-playing agent that chooses a move using iterative deepening minimax
@@ -293,8 +293,17 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        best_move = (-1, -1)
+
+        try:
+            depth = 0
+            while True:
+                best_move = self.alphabeta(game, depth)
+                depth += 1
+        except SearchTimeout:
+            pass
+
+        return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -341,8 +350,67 @@ class AlphaBetaPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        self.check_search_timeout()
+
+        best_move = (-1, -1)
+        best_score = float("-inf")
+
+        for move in game.get_legal_moves(self):
+            score = self.min_value(game.forecast_move(move), depth - 1, alpha, beta)
+            alpha = max(alpha, score)
+
+            if score > best_score:
+                best_move = move
+                best_score = score
+
+        return best_move
+
+    def check_search_timeout(self):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+    def max_value(self, game, depth, alpha, beta):
+        self.check_search_timeout()
+
+        if depth == 0:
+            return self.score(game, self)
+
+        moves = game.get_legal_moves(self)
+
+        if len(moves) == 0:
+            return game.utility(self)
+
+        score = float("-inf")
+
+        for move in moves:
+            score = max(score, self.min_value(game.forecast_move(move), depth - 1, alpha, beta))
+
+            if score >= beta:
+                return score
+
+            alpha = max(alpha, score)
+
+        return score
+
+    def min_value(self, game, depth, alpha, beta):
+        self.check_search_timeout()
+
+        if depth == 0:
+            return self.score(game, self)
+
+        moves = game.get_legal_moves(game.get_opponent(self))
+
+        if len(moves) == 0:
+            return game.utility(self)
+
+        score = float("inf")
+
+        for move in moves:
+            score = min(score, self.max_value(game.forecast_move(move), depth - 1, alpha, beta))
+
+            if score <= alpha:
+                return score
+
+            beta = min(beta, score)
+
+        return score
