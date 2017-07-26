@@ -161,7 +161,11 @@ class MinimaxPlayer(IsolationPlayer):
 
         # Initialize the best move so that this function returns something
         # in case the search fails due to timeout
+
         best_move = (-1, -1)
+        moves = game.get_legal_moves(self)
+        if moves:
+            best_move = random.choice(moves)
 
         try:
             # The try/except block will automatically catch the exception
@@ -294,6 +298,9 @@ class AlphaBetaPlayer(IsolationPlayer):
         self.time_left = time_left
 
         best_move = (-1, -1)
+        moves = game.get_legal_moves(self)
+        if moves:
+            best_move = random.choice(moves)
 
         try:
             depth = 0
