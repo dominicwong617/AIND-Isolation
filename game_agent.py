@@ -34,6 +34,12 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
     player_legal_moves_count = len(game.get_legal_moves(player))
     opponent_legal_moves_count = len(game.get_legal_moves(game.get_opponent(player)))
     return float(player_legal_moves_count - opponent_legal_moves_count)
@@ -61,6 +67,12 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
     return float(len(game.get_legal_moves(player)))
 
 
@@ -86,13 +98,15 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    opponent_legal_moves_count = len(game.get_legal_moves(game.get_opponent(player)))
-    score = -float(opponent_legal_moves_count)
+    if game.is_loser(player):
+        return float("-inf")
 
-    if opponent_legal_moves_count >= 4:
-        return score * 2
-    else:
-        return score
+    if game.is_winner(player):
+        return float("inf")
+
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    return float(1. / ((h - y)**2) + 1. / ((w - x)**2))
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
@@ -165,7 +179,12 @@ class MinimaxPlayer(IsolationPlayer):
         best_move = (-1, -1)
         moves = game.get_legal_moves(self)
         if moves:
-            best_move = random.choice(moves)
+            best_score = float("-inf")
+            for move in moves:
+                score = self.score(game.forecast_move(move), self)
+                if score > best_score:
+                    best_move = move
+                    best_score = score
 
         try:
             # The try/except block will automatically catch the exception
@@ -300,7 +319,12 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_move = (-1, -1)
         moves = game.get_legal_moves(self)
         if moves:
-            best_move = random.choice(moves)
+            best_score = float("-inf")
+            for move in moves:
+                score = self.score(game.forecast_move(move), self)
+                if score > best_score:
+                    best_move = move
+                    best_score = score
 
         try:
             depth = 0
